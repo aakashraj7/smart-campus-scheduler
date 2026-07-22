@@ -1,0 +1,18 @@
+# Maven target build output
+target/
+
+# Local compiled binaries & libraries
+bin/
+lib/
+sources.txt
+exports/
+*.log
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.DS_Store
