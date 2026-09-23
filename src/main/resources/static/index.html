@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Campus Scheduler | Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Header Bar -->
+    <header class="app-header">
+        <div class="header-brand">
+            <div class="brand-icon">🗓️</div>
+            <div>
+                <h1 class="brand-title">Smart Campus Scheduler</h1>
+                <p class="brand-subtitle">Intelligent Timetable Management & CSP Scheduling Engine</p>
+            </div>
+        </div>
+        <div class="header-user" id="userSection">
+            <div class="user-badge" id="userBadge">
+                <span class="user-avatar" id="userAvatar">A</span>
+                <div class="user-info">
+                    <span class="user-name" id="userName">Loading...</span>
+                    <span class="user-role" id="userRole">ADMIN</span>
+                </div>
+            </div>
+            <button class="btn btn-outline btn-sm" id="authBtn" onclick="handleAuthAction()">Logout</button>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar">
+            <nav class="sidebar-nav">
+                <button class="nav-item active" onclick="switchTab('dashboard')">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('timetable')">
+                    <span class="nav-icon">🗓️</span>
+                    <span>Timetable Studio</span>
+                </button>
+                <button class="nav-item admin-only" onclick="switchTab('faculties')">
+                    <span class="nav-icon">👨‍🏫</span>
+                    <span>Faculties</span>
+                </button>
+                <button class="nav-item admin-only" onclick="switchTab('subjects')">
+                    <span class="nav-icon">📚</span>
+                    <span>Subjects</span>
+                </button>
+                <button class="nav-item admin-only" onclick="switchTab('classes')">
+                    <span class="nav-icon">🏫</span>
+                    <span>Class Requirements</span>
+                </button>
+                <button class="nav-item admin-only" onclick="switchTab('settings')">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Academic Config</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('exports')">
+                    <span class="nav-icon">📥</span>
+                    <span>Exports & Reports</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sys-status">
+                    <span class="status-dot"></span>
+                    <span>MongoDB: Connected</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="app-main">
+            <!-- Toast notification container -->
+            <div id="toastContainer" class="toast-container"></div>
+
+            <!-- Tab 1: Dashboard -->
+            <section id="tab-dashboard" class="tab-content active">
+                <div class="section-header">
+                    <h2>Campus Overview</h2>
+                    <p class="section-desc">Real-time statistics of academic resources and scheduling status</p>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">👨‍🏫</div>
+                        <div class="metric-data">
+                            <span class="metric-value" id="statFacultyCount">0</span>
+                            <span class="metric-label">Registered Faculty</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">📚</div>
+                        <div class="metric-data">
+                            <span class="metric-value" id="statSubjectCount">0</span>
+                            <span class="metric-label">Total Subjects</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">🏫</div>
+                        <div class="metric-data">
+                            <span class="metric-value" id="statClassCount">0</span>
+                            <span class="metric-label">Configured Classes</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">🗓️</div>
+                        <div class="metric-data">
+                            <span class="metric-value" id="statWeeklySlots">40</span>
+                            <span class="metric-label">Slots / Week Capacity</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-banner">
+                    <div class="banner-text">
+                        <h3>Automated Conflict-Free Timetable Generator</h3>
+                        <p>Generate conflict-free weekly schedules using the Constraint Satisfaction Problem (CSP) solver engine with a single click.</p>
+                    </div>
+                    <div class="banner-actions">
+                        <button class="btn btn-primary" onclick="triggerAutoSchedule()">🚀 Run Auto-Scheduler</button>
+                        <button class="btn btn-secondary" onclick="switchTab('timetable')">View Timetable Grid</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 2: Timetable Studio -->
+            <section id="tab-timetable" class="tab-content">
+                <div class="section-header between">
+                    <div>
+                        <h2>Timetable Studio</h2>
+                        <p class="section-desc">View generated timetables, inspect faculty schedules, and perform manual slot swaps</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary admin-only" onclick="triggerAutoSchedule()">⚡ Generate Timetables</button>
+                    </div>
+                </div>
+
+                <!-- Controls & Filters -->
+                <div class="filter-card">
+                    <div class="filter-group">
+                        <label>View Mode:</label>
+                        <div class="segmented-control">
+                            <button class="segment-btn active" id="btnModeClass" onclick="setTimetableViewMode('class')">By Class</button>
+                            <button class="segment-btn" id="btnModeFaculty" onclick="setTimetableViewMode('faculty')">By Faculty</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-group" id="filterClassSelectGroup">
+                        <label for="selectClass">Select Class:</label>
+                        <select id="selectClass" class="form-select" onchange="loadCurrentTimetable()">
+                            <!-- Dynamic classes -->
+                        </select>
+                    </div>
+
+                    <div class="filter-group hidden" id="filterFacultySelectGroup">
+                        <label for="selectFaculty">Select Faculty:</label>
+                        <select id="selectFaculty" class="form-select" onchange="loadCurrentTimetable()">
+                            <!-- Dynamic faculties -->
+                        </select>
+                    </div>
+
+                    <div class="filter-group swap-control admin-only">
+                        <button class="btn btn-secondary btn-sm" id="btnToggleSwap" onclick="toggleSwapMode()">🔄 Swap Period Slots</button>
+                    </div>
+                </div>
+
+                <!-- Swap instruction banner (when active) -->
+                <div id="swapNotice" class="swap-notice hidden">
+                    <span><strong>Swap Mode Active:</strong> Click two period slots on the grid to swap them.</span>
+                    <button class="btn btn-outline btn-xs" onclick="cancelSwap()">Cancel</button>
+                </div>
+
+                <!-- Timetable Grid Container -->
+                <div class="timetable-wrapper">
+                    <div class="timetable-title-bar">
+                        <span id="timetableCurrentTitle">Loading Timetable...</span>
+                        <span id="timetableStatusBadge" class="badge badge-success">PUBLISHED</span>
+                    </div>
+                    <div id="timetableGridContainer" class="table-responsive">
+                        <!-- Rendered Timetable Grid -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 3: Faculty Management -->
+            <section id="tab-faculties" class="tab-content">
+                <div class="section-header between">
+                    <div>
+                        <h2>Faculty Management</h2>
+                        <p class="section-desc">Unified registration for faculty login accounts and academic workload constraints</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openFacultyModal()">➕ Register New Faculty</button>
+                </div>
+
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Faculty ID</th>
+                                    <th>Full Name</th>
+                                    <th>Department</th>
+                                    <th>Email</th>
+                                    <th>Mobile Number</th>
+                                    <th>Max/Day</th>
+                                    <th>Max/Week</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="facultyTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 4: Subjects Catalogue -->
+            <section id="tab-subjects" class="tab-content">
+                <div class="section-header between">
+                    <div>
+                        <h2>Subjects Catalogue</h2>
+                        <p class="section-desc">Define course codes, full course titles, and short names for display grids</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openSubjectModal()">➕ Add Subject</button>
+                </div>
+
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Subject Code</th>
+                                    <th>Full Course Title</th>
+                                    <th>Short Name (Display)</th>
+                                    <th>Type</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subjectTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 5: Class Requirements -->
+            <section id="tab-classes" class="tab-content">
+                <div class="section-header between">
+                    <div>
+                        <h2>Class Subject Requirements</h2>
+                        <p class="section-desc">Specify weekly period demand per subject and faculty assignment for each section</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openClassModal()">➕ Add Class Section</button>
+                </div>
+
+                <div id="classesListContainer" class="classes-grid">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- Tab 6: Academic Settings -->
+            <section id="tab-settings" class="tab-content">
+                <div class="section-header">
+                    <h2>Academic Configuration</h2>
+                    <p class="section-desc">Customize institutional working days, Saturday inclusion, and daily periods</p>
+                </div>
+
+                <div class="card max-w-md">
+                    <form id="configForm" onsubmit="saveAcademicConfig(event)">
+                        <div class="form-group">
+                            <label class="form-label">Working Days Schedule</label>
+                            <div class="checkbox-control">
+                                <input type="checkbox" id="cfgIncludeSaturday">
+                                <label for="cfgIncludeSaturday">Include Saturday in Weekly Timetable (6-day week)</label>
+                            </div>
+                            <span class="field-hint">When enabled, classes run Monday through Saturday.</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="cfgPeriodsPerDay">Periods Per Day (1 to 10)</label>
+                            <input type="number" id="cfgPeriodsPerDay" class="form-input" min="1" max="10" required>
+                            <span class="field-hint">Standard full campus day is usually 8 periods.</span>
+                        </div>
+
+                        <div class="info-box">
+                            <strong>Computed Weekly Capacity:</strong>
+                            <span id="cfgTotalCapacity">40</span> slots per class section
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Configuration</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Tab 7: Exports & Reports -->
+            <section id="tab-exports" class="tab-content">
+                <div class="section-header">
+                    <h2>Exports & Workload Analytics</h2>
+                    <p class="section-desc">Download formatted timetable documents and monitor faculty workload utilization</p>
+                </div>
+
+                <div class="exports-cards-row">
+                    <div class="card export-action-card">
+                        <h3>📄 Plain Text Timetable (.txt)</h3>
+                        <p>Export class schedule with formatted ASCII border grids suitable for printing or terminal display.</p>
+                        <div class="export-form-row">
+                            <select id="exportTxtClassSelect" class="form-select"></select>
+                            <button class="btn btn-primary" onclick="downloadTxtExport()">Download TXT</button>
+                        </div>
+                    </div>
+
+                    <div class="card export-action-card">
+                        <h3>📊 Microsoft Excel Spreadsheet (.csv)</h3>
+                        <p>Export standard RFC-4180 CSV formatted timetable ready to open directly in Excel or Google Sheets.</p>
+                        <div class="export-form-row">
+                            <select id="exportCsvClassSelect" class="form-select"></select>
+                            <button class="btn btn-primary" onclick="downloadCsvExport()">Download CSV</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-6">
+                    <h3>Faculty Workload Utilization Report</h3>
+                    <p class="text-muted">Calculates percentage of maximum weekly teaching capacity assigned across all class sections.</p>
+                    <div class="table-responsive mt-4">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Faculty ID</th>
+                                    <th>Faculty Name</th>
+                                    <th>Department</th>
+                                    <th>Assigned Periods / Wk</th>
+                                    <th>Max Workload Limit</th>
+                                    <th>Utilization Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analyticsTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal: Register Faculty -->
+    <div id="modalFaculty" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Unified Faculty Registration</h3>
+                <button class="modal-close" onclick="closeModal('modalFaculty')">&times;</button>
+            </div>
+            <form id="formFaculty" onsubmit="submitFacultyForm(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="facUsername">Login Username *</label>
+                        <input type="text" id="facUsername" class="form-input" placeholder="e.g. sharma_fac" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="facPassword">Login Password *</label>
+                        <input type="password" id="facPassword" class="form-input" placeholder="Min 4 characters" required minlength="4">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="facId">Faculty ID *</label>
+                        <input type="text" id="facId" class="form-input" placeholder="e.g. FAC001" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="facName">Full Name *</label>
+                        <input type="text" id="facName" class="form-input" placeholder="e.g. Dr. Sharma" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="facDept">Department *</label>
+                        <input type="text" id="facDept" class="form-input" placeholder="e.g. IT" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="facEmail">Email Address *</label>
+                        <input type="email" id="facEmail" class="form-input" placeholder="sharma@campus.edu" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="facPhone">Mobile Number (10 digits starting with 6-9) *</label>
+                    <input type="text" id="facPhone" class="form-input" placeholder="e.g. 9876543210" pattern="^[6-9]\d{9}$" required>
+                    <span class="field-hint">Must be 10 digits starting with 6, 7, 8, or 9.</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="facMaxDay">Max Periods Per Day (1-8) *</label>
+                        <input type="number" id="facMaxDay" class="form-input" value="4" min="1" max="8" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="facMaxWeek">Max Periods Per Week (1-40) *</label>
+                        <input type="number" id="facMaxWeek" class="form-input" value="25" min="1" max="40" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalFaculty')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Faculty Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Subject -->
+    <div id="modalSubject" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Add Subject</h3>
+                <button class="modal-close" onclick="closeModal('modalSubject')">&times;</button>
+            </div>
+            <form id="formSubject" onsubmit="submitSubjectForm(event)">
+                <div class="form-group">
+                    <label class="form-label" for="subCode">Subject Code *</label>
+                    <input type="text" id="subCode" class="form-input" placeholder="e.g. IT401" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="subName">Full Course Title *</label>
+                    <input type="text" id="subName" class="form-input" placeholder="e.g. Operating Systems" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="subShort">Short Name / Grid Display Abbreviation *</label>
+                    <input type="text" id="subShort" class="form-input" placeholder="e.g. OS" required maxlength="10">
+                </div>
+                <div class="checkbox-control">
+                    <input type="checkbox" id="subIsLab">
+                    <label for="subIsLab">Practical / Laboratory Course</label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalSubject')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Subject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add / Edit Class Group Requirements -->
+    <div id="modalClass" class="modal-overlay hidden">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <h3>Configure Class Subject Requirements</h3>
+                <button class="modal-close" onclick="closeModal('modalClass')">&times;</button>
+            </div>
+            <form id="formClass" onsubmit="submitClassForm(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="clsId">Class ID / Section *</label>
+                        <input type="text" id="clsId" class="form-input" placeholder="e.g. IT-C" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="clsDept">Department *</label>
+                        <input type="text" id="clsDept" class="form-input" placeholder="e.g. IT" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="clsSem">Semester (1-10) *</label>
+                        <input type="number" id="clsSem" class="form-input" value="4" min="1" max="10" required>
+                    </div>
+                </div>
+
+                <div class="demand-section">
+                    <div class="between mb-2">
+                        <h4>Assigned Subjects & Period Requirements</h4>
+                        <button type="button" class="btn btn-outline btn-xs" onclick="addClassDemandRow()">➕ Add Subject Demand</button>
+                    </div>
+                    <div id="classDemandsList" class="demand-rows-container">
+                        <!-- Dynamic demand rows -->
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalClass')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Class Section</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Login -->
+    <div id="modalLogin" class="modal-overlay hidden">
+        <div class="modal-card max-w-sm">
+            <div class="modal-header">
+                <h3>Account Login</h3>
+                <button class="modal-close" onclick="closeModal('modalLogin')">&times;</button>
+            </div>
+            <form id="formLogin" onsubmit="submitLoginForm(event)">
+                <div class="form-group">
+                    <label class="form-label" for="loginUser">Username</label>
+                    <input type="text" id="loginUser" class="form-input" value="aakashraj" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loginPass">Password</label>
+                    <input type="password" id="loginPass" class="form-input" value="0000" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-full">Sign In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

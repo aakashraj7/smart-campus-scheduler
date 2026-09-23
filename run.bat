@@ -1,6 +1,7 @@
 @echo off
 echo ===================================================
-echo   Launching Smart Campus Scheduler CLI Application
+echo   Launching Smart Campus Scheduler Web Application
+echo   URL: http://localhost:8080
 echo ===================================================
 
-java -cp "bin;lib/*" com.campus.scheduler.Main
+call mvnw.cmd spring-boot:run

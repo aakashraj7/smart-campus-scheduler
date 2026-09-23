@@ -1,5 +1,6 @@
 Write-Host "===================================================" -ForegroundColor Cyan
-Write-Host "  Launching Smart Campus Scheduler CLI Application" -ForegroundColor Cyan
+Write-Host "  Launching Smart Campus Scheduler Web Application" -ForegroundColor Cyan
+Write-Host "  URL: http://localhost:8080" -ForegroundColor Yellow
 Write-Host "===================================================" -ForegroundColor Cyan
 
-java -cp "bin;lib/*" com.campus.scheduler.Main
+.\mvnw.cmd spring-boot:run
